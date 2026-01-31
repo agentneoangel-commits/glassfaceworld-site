@@ -1,5 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
+import { promises as fs } from 'fs';
+import path from 'path';
 import { type SanityDocument } from "next-sanity";
 import { client } from "@/sanity/client";
 import imageUrlBuilder from "@sanity/image-url";
@@ -24,70 +25,38 @@ const urlFor = (source: any) =>
     ? imageUrlBuilder({ projectId, dataset }).image(source)
     : null;
 
-export default async function Home() {
+async function getProjects(): Promise<SanityDocument[]> {
+  // Try to fetch from Sanity first
   let projects: SanityDocument[] = [];
   
   try {
     projects = await client.fetch<SanityDocument[]>(PROJECTS_QUERY);
   } catch (e) {
-    // Fallback for static export when Sanity is unavailable
-    console.log('Sanity fetch failed, using fallback data');
+    console.log('Sanity fetch failed, using local data');
   }
   
-  // Fallback projects if Sanity returns empty
-  if (projects.length === 0) {
-    projects = [
-      {
-        _id: '1',
-        _type: 'project',
-        _rev: '',
-        _createdAt: '',
-        _updatedAt: '',
-        title: 'Music Production',
-        slug: { current: 'music' },
-        description: 'Original tracks and compositions.',
-        category: 'audio',
-        featured: true,
-      },
-      {
-        _id: '2',
-        _type: 'project',
-        _rev: '',
-        _createdAt: '',
-        _updatedAt: '',
-        title: 'Visual Art',
-        slug: { current: 'visual-art' },
-        description: 'Digital and physical artworks.',
-        category: 'visual',
-        featured: true,
-      },
-      {
-        _id: '3',
-        _type: 'project',
-        _rev: '',
-        _createdAt: '',
-        _updatedAt: '',
-        title: 'Video Projects',
-        slug: { current: 'video' },
-        description: 'Short films and music videos.',
-        category: 'video',
-        featured: false,
-      },
-      {
-        _id: '4',
-        _type: 'project',
-        _rev: '',
-        _createdAt: '',
-        _updatedAt: '',
-        title: 'Design Work',
-        slug: { current: 'design' },
-        description: 'Brand and graphic design.',
-        category: 'design',
-        featured: false,
-      },
-    ];
+  // If Sanity has data, use it
+  if (projects.length > 0) {
+    return projects;
   }
   
+  // Otherwise load from local JSON file
+  try {
+    const filePath = path.join(process.cwd(), 'src', 'app', 'data', 'projects.json');
+    const fileContents = await fs.readFile(filePath, 'utf8');
+    const data = JSON.parse(fileContents);
+    return data.map((p: any) => ({
+      ...p,
+      _type: 'project',
+    }));
+  } catch (e) {
+    console.error('Failed to load local projects:', e);
+    return [];
+  }
+}
+
+export default async function Home() {
+  const projects = await getProjects();
   const featuredProjects = projects.filter((p) => p.featured);
 
   return (
@@ -124,7 +93,7 @@ export default async function Home() {
       <section className="px-6 py-12 md:px-12 lg:px-24 border-t border-zinc-800">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-8">
-            All Projects
+            All Projects ({projects.length})
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project) => (
@@ -184,6 +153,9 @@ function ProjectCard({ project }: { project: SanityDocument }) {
         <h3 className="text-xl font-semibold group-hover:text-zinc-300 transition">
           {project.title}
         </h3>
+        {project.artist && (
+          <p className="text-sm text-zinc-500">{project.artist}</p>
+        )}
         {project.description && (
           <p className="text-zinc-400 line-clamp-2">{project.description}</p>
         )}

@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { promises as fs } from 'fs';
+import path from 'path';
+import { notFound } from 'next/navigation';
 import { type SanityDocument } from "next-sanity";
 import { PortableText } from "next-sanity";
-import { client } from "@/sanity/client";
+import { client } from "@sanity/client";
 import imageUrlBuilder from "@sanity/image-url";
 
 const PROJECT_QUERY = `*[_type == "project" && slug.current == $slug][0]`;
@@ -13,6 +16,34 @@ const urlFor = (source: any) =>
     ? imageUrlBuilder({ projectId, dataset }).image(source)
     : null;
 
+async function getProject(slug: string): Promise<SanityDocument | null> {
+  // Try Sanity first
+  try {
+    const project = await client.fetch<SanityDocument>(PROJECT_QUERY, { slug });
+    if (project) return project;
+  } catch (e) {
+    console.log('Sanity fetch failed for project');
+  }
+  
+  // Fallback to local JSON
+  try {
+    const filePath = path.join(process.cwd(), 'src', 'app', 'data', 'projects.json');
+    const fileContents = await fs.readFile(filePath, 'utf8');
+    const projects = JSON.parse(fileContents);
+    return projects.find((p: any) => p.slug.current === slug) || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function getPage(slug: string): Promise<SanityDocument | null> {
+  try {
+    return await client.fetch<SanityDocument>(PAGE_QUERY, { slug });
+  } catch (e) {
+    return null;
+  }
+}
+
 export default async function DynamicPage({
   params,
 }: {
@@ -21,27 +52,18 @@ export default async function DynamicPage({
   const { slug } = await params;
   
   // Try project first, then page
-  const project = await client.fetch<SanityDocument>(PROJECT_QUERY, { slug });
+  const project = await getProject(slug);
   if (project) {
     return <ProjectView project={project} />;
   }
   
-  const page = await client.fetch<SanityDocument>(PAGE_QUERY, { slug });
+  const page = await getPage(slug);
   if (page) {
     return <PageView page={page} />;
   }
 
   // Not found
-  return (
-    <main className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold mb-4">Page not found</h1>
-        <Link href="/" className="text-zinc-400 hover:text-white">
-          ← Back to home
-        </Link>
-      </div>
-    </main>
-  );
+  notFound();
 }
 
 function ProjectView({ project }: { project: SanityDocument }) {
@@ -69,6 +91,10 @@ function ProjectView({ project }: { project: SanityDocument }) {
           <h1 className="text-4xl md:text-6xl font-bold mt-4 mb-8">
             {project.title}
           </h1>
+
+          {project.artist && (
+            <p className="text-xl text-zinc-400 mb-6">{project.artist}</p>
+          )}
 
           {imageUrl && (
             <div className="aspect-video bg-zinc-900 rounded-lg overflow-hidden mb-12">
@@ -162,10 +188,25 @@ function PageView({ page }: { page: SanityDocument }) {
   );
 }
 
-// Pre-render common routes
+// Pre-render all project routes
 export async function generateStaticParams() {
-  return [
-    { slug: "about" },
-    { slug: "contact" },
-  ];
+  // Get all project slugs from local JSON
+  try {
+    const filePath = path.join(process.cwd(), 'src', 'app', 'data', 'projects.json');
+    const fileContents = await fs.readFile(filePath, 'utf8');
+    const projects = JSON.parse(fileContents);
+    const projectSlugs = projects.map((p: any) => ({ slug: p.slug.current }));
+    
+    // Add static pages
+    return [
+      { slug: "about" },
+      { slug: "contact" },
+      ...projectSlugs,
+    ];
+  } catch (e) {
+    return [
+      { slug: "about" },
+      { slug: "contact" },
+    ];
+  }
 }
