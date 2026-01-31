@@ -25,7 +25,69 @@ const urlFor = (source: any) =>
     : null;
 
 export default async function Home() {
-  const projects = await client.fetch<SanityDocument[]>(PROJECTS_QUERY);
+  let projects: SanityDocument[] = [];
+  
+  try {
+    projects = await client.fetch<SanityDocument[]>(PROJECTS_QUERY);
+  } catch (e) {
+    // Fallback for static export when Sanity is unavailable
+    console.log('Sanity fetch failed, using fallback data');
+  }
+  
+  // Fallback projects if Sanity returns empty
+  if (projects.length === 0) {
+    projects = [
+      {
+        _id: '1',
+        _type: 'project',
+        _rev: '',
+        _createdAt: '',
+        _updatedAt: '',
+        title: 'Music Production',
+        slug: { current: 'music' },
+        description: 'Original tracks and compositions.',
+        category: 'audio',
+        featured: true,
+      },
+      {
+        _id: '2',
+        _type: 'project',
+        _rev: '',
+        _createdAt: '',
+        _updatedAt: '',
+        title: 'Visual Art',
+        slug: { current: 'visual-art' },
+        description: 'Digital and physical artworks.',
+        category: 'visual',
+        featured: true,
+      },
+      {
+        _id: '3',
+        _type: 'project',
+        _rev: '',
+        _createdAt: '',
+        _updatedAt: '',
+        title: 'Video Projects',
+        slug: { current: 'video' },
+        description: 'Short films and music videos.',
+        category: 'video',
+        featured: false,
+      },
+      {
+        _id: '4',
+        _type: 'project',
+        _rev: '',
+        _createdAt: '',
+        _updatedAt: '',
+        title: 'Design Work',
+        slug: { current: 'design' },
+        description: 'Brand and graphic design.',
+        category: 'design',
+        featured: false,
+      },
+    ];
+  }
+  
   const featuredProjects = projects.filter((p) => p.featured);
 
   return (
