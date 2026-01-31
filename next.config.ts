@@ -3,8 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: 'export',
   distDir: 'dist',
-  basePath: '/nextjs-glassfaceworld',
-  assetPrefix: '/nextjs-glassfaceworld',
+  basePath: '/glassfaceworld-site',
+  assetPrefix: '/glassfaceworld-site',
   images: {
     unoptimized: true,
   },

@@ -1,4 +1,4 @@
 1:"$Sreact.fragment"
-2:I[2580,["/nextjs-glassfaceworld/_next/static/chunks/23c1bc3862972c7b.js","/nextjs-glassfaceworld/_next/static/chunks/316aaf0d898dfcbc.js"],"default"]
-3:I[1942,["/nextjs-glassfaceworld/_next/static/chunks/23c1bc3862972c7b.js","/nextjs-glassfaceworld/_next/static/chunks/316aaf0d898dfcbc.js"],"default"]
-0:{"buildId":"Dwa1RJt4GQGn1RpI-wVbB","rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"loading":null,"isPartial":false}
+2:I[2580,["/glassfaceworld-site/_next/static/chunks/23c1bc3862972c7b.js","/glassfaceworld-site/_next/static/chunks/316aaf0d898dfcbc.js"],"default"]
+3:I[1942,["/glassfaceworld-site/_next/static/chunks/23c1bc3862972c7b.js","/glassfaceworld-site/_next/static/chunks/316aaf0d898dfcbc.js"],"default"]
+0:{"buildId":"TzSB_soluMvaK3egrc--y","rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"loading":null,"isPartial":false}
